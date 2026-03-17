@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SSC CGL Phase 2 Planner (Apr–Aug 2027)</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+--bg: #f0f4ff;
+--card: #ffffff;
+--text: #1f2933;
+--border: #d0d7de;
+--accent: #2563eb;
+--accent2: #16a34a;
+--muted: #6b7280;
+--row-hover: #f1f5ff;
+--subj-math: #dbeafe;
+--subj-eng: #fce7f3;
+--subj-reas: #ede9fe;
+--subj-gk: #dcfce7;
+--subj-comp: #fef9c3;
+--subj-type: #ffedd5;
+}
+[data-theme="dark"] {
+--bg: #0f172a;
+--card: #1e293b;
+--text: #f1f5f9;
+--border: #334155;
+--accent: #60a5fa;
+--accent2: #34d399;
+--muted: #94a3b8;
+--row-hover: #1e3a5f;
+--subj-math: #1e3a5f;
+--subj-eng: #3b1f35;
+--subj-reas: #2e1f5e;
+--subj-gk: #14352a;
+--subj-comp: #3b3210;
+--subj-type: #3b2010;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",system-ui,sans-serif;}
+body{background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh;}
+body.modal-open{overflow:hidden;}
+
+/* ── HEADER ── */
+.header{
+background:linear-gradient(135deg,#2563eb 0%,#10b981 100%);
+color:#fff;padding:24px 28px;
+border-radius:20px;
+box-shadow:0 12px 32px rgba(37,99,235,.28);
+margin-bottom:22px;
+}
+.header h1{font-size:1.65rem;font-weight:800;margin-bottom:4px;}
+.header p{font-size:0.88rem;opacity:.9;line-height:1.7;}
+
+/* ── CONTROLS ── */
+.controls{
+display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;
+background:var(--card);padding:14px 16px;border-radius:14px;
+box-shadow:0 4px 16px rgba(0,0,0,.06);
+}
+button,select{
+border:none;border-radius:9px;padding:9px 15px;
+font-weight:600;font-size:0.85rem;cursor:pointer;transition:all .18s;
+}
+button{background:var(--accent);color:#fff;}
+button.light{background:#4b5563;color:#fff;}
+button.danger{background:#dc2626;color:#fff;}
+button.success{background:#16a34a;color:#fff;}
+button:hover{filter:brightness(1.12);transform:translateY(-1px);}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+select{background:var(--card);color:var(--text);border:1.5px solid var(--border);padding:9px 12px;}
+
+/* ── COUNTDOWN ── */
+.countdown-grid{
+display:grid;grid-template-columns:repeat(4,1fr);gap:12px;
+margin-bottom:22px;
+}
+.cd-box{
+background:var(--card);border-radius:16px;padding:16px 10px;
+text-align:center;box-shadow:0 4px 18px rgba(0,0,0,.07);
+border-top:4px solid var(--accent);
+}
+.cd-box strong{display:block;font-size:2rem;font-weight:800;color:var(--accent);line-height:1.1;}
+.cd-box span{font-size:0.78rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.07em;}
+
+/* ── PROGRESS SECTION ── */
+.progress-section{
+background:var(--card);border-radius:18px;padding:20px;
+box-shadow:0 4px 18px rgba(0,0,0,.07);margin-bottom:22px;
+}
+.progress-section h2{margin-bottom:16px;font-size:1.1rem;font-weight:700;}
+.chart-grid{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;}
+.chart-box{display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px;}
+.chart-box canvas{width:140px!important;height:140px!important;}
+.chart-label{font-weight:700;font-size:0.85rem;color:var(--muted);}
+.chart-pct{font-size:1.2rem;font-weight:800;color:var(--accent);}
+
+/* ── LEGEND ── */
+.legend{
+display:flex;flex-wrap:wrap;gap:10px;margin-bottom:22px;
+background:var(--card);padding:14px 16px;border-radius:14px;
+box-shadow:0 4px 16px rgba(0,0,0,.06);
+}
+.legend-item{
+display:flex;align-items:center;gap:7px;
+font-size:0.82rem;font-weight:600;color:var(--muted);
+background:var(--bg);padding:5px 12px;border-radius:20px;
+}
+
+/* ── WEEK BLOCK ── */
+.week-block{
+background:var(--card);border-radius:18px;
+box-shadow:0 4px 20px rgba(0,0,0,.07);
+margin-bottom:22px;overflow:hidden;
+}
+.week-header{
+display:flex;justify-content:space-between;align-items:center;
+padding:16px 20px;cursor:pointer;user-select:none;
+border-bottom:2px solid var(--border);flex-wrap:wrap;gap:8px;
+}
+.week-header-left h3{font-size:1.05rem;font-weight:800;}
+.week-header-left .focus-tag{
+display:inline-block;font-size:0.78rem;color:var(--accent);
+background:rgba(37,99,235,.1);padding:3px 10px;border-radius:20px;
+margin-top:4px;font-weight:600;
+}
+.toggle-btn{
+background:rgba(37,99,235,.12);color:var(--accent);
+font-size:0.85rem;padding:7px 14px;border-radius:8px;
+border:none;cursor:pointer;font-weight:700;flex-shrink:0;
+}
+.week-block.collapsed .week-body{display:none;}
+.week-block.collapsed .toggle-btn{background:rgba(22,163,74,.12);color:var(--accent2);}
+
+/* ── SUBJECT CARDS (vertical) ── */
+.week-body{padding:16px;}
+.subject-card{
+border-radius:14px;margin-bottom:12px;overflow:hidden;
+border:1.5px solid var(--border);transition:box-shadow .2s;
+}
+.subject-card:last-child{margin-bottom:0;}
+.subject-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.1);}
+
+/* subject colour strips */
+.subject-card[data-subject="Mathematics"] .subj-header{background:var(--subj-math);}
+.subject-card[data-subject="English"] .subj-header{background:var(--subj-eng);}
+.subject-card[data-subject="Reasoning"] .subj-header{background:var(--subj-reas);}
+.subject-card[data-subject="GK"] .subj-header{background:var(--subj-gk);}
+.subject-card[data-subject="Computer"] .subj-header{background:var(--subj-comp);}
+.subject-card[data-subject="Typing"] .subj-header{background:var(--subj-type);}
+
+.subj-header{
+display:flex;align-items:center;justify-content:space-between;
+padding:10px 16px;flex-wrap:wrap;gap:8px;
+}
+.subj-badge{
+display:flex;align-items:center;gap:8px;
+}
+.subj-icon{font-size:1.25rem;}
+.subj-name{font-weight:800;font-size:0.95rem;color:var(--text);}
+.subj-topic{font-weight:600;font-size:0.88rem;color:var(--muted);}
+.subj-body{padding:12px 16px;background:var(--card);}
+.subj-detail{
+font-size:0.85rem;color:var(--muted);
+background:var(--bg);border-radius:8px;
+padding:8px 12px;margin-bottom:12px;line-height:1.6;
+}
+
+/* ── PROGRESS CHECKBOXES ── */
+.progress-row{
+display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;
+}
+.prog-item{
+display:flex;flex-direction:column;align-items:center;gap:5px;
+background:var(--bg);border-radius:10px;padding:8px 4px;
+cursor:pointer;transition:background .18s;border:1.5px solid transparent;
+}
+.prog-item:has(input:checked){
+border-color:var(--accent2);
+background:rgba(22,163,74,.08);
+}
+.prog-item input{
+width:20px;height:20px;cursor:pointer;accent-color:var(--accent2);
+}
+.prog-item .prog-icon{font-size:1.2rem;}
+.prog-item .prog-label{font-size:0.7rem;font-weight:700;color:var(--muted);text-align:center;}
+.notes-btn{
+width:100%;background:var(--accent2);color:#fff;
+border:none;border-radius:9px;padding:8px;
+font-size:0.85rem;font-weight:700;cursor:pointer;
+transition:all .18s;
+}
+.notes-btn:hover{filter:brightness(1.1);}
+.notes-indicator{
+display:inline-block;width:8px;height:8px;
+background:var(--accent);border-radius:50%;margin-left:6px;
+vertical-align:middle;display:none;
+}
+.has-note .notes-indicator{display:inline-block;}
+.no-match-msg{
+display:none;text-align:center;padding:16px;
+font-size:0.9rem;color:var(--muted);font-style:italic;
+}
+.week-block.no-subjects .no-match-msg{display:block;}
+.week-block.no-subjects .week-body .subject-card{display:none;}
+
+/* ── MODAL ── */
+.modal{
+position:fixed;inset:0;background:rgba(0,0,0,.65);
+display:none;align-items:center;justify-content:center;
+z-index:100;padding:20px;
+}
+.modal.active{display:flex;}
+.modal-box{
+background:var(--card);color:var(--text);
+border-radius:16px;padding:24px;width:100%;
+max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.4);
+}
+.modal-box h3{font-size:1.05rem;font-weight:800;margin-bottom:4px;}
+.modal-hint{font-size:0.8rem;color:var(--muted);margin-bottom:10px;}
+.modal-box textarea{
+width:100%;min-height:160px;border:1.5px solid var(--border);
+border-radius:10px;padding:12px;background:var(--bg);
+color:var(--text);font-size:0.9rem;resize:vertical;
+font-family:inherit;
+}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:14px;}
+
+/* ── PRINT ── */
+@media print{
+.controls,.modal{display:none!important;}
+.week-block.collapsed .week-body{display:block!important;}
+body{background:#fff;}
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:600px){
+.countdown-grid{grid-template-columns:repeat(2,1fr);}
+.progress-row{grid-template-columns:repeat(2,1fr);}
+button,select{flex:1;font-size:0.8rem;}
+.header h1{font-size:1.3rem;}
+.cd-box strong{font-size:1.5rem;}
+}
+</style>
+</head>
+<body>
+
+<div style="max-width:960px;margin:auto;padding:20px;">
+
+<!-- HEADER -->
+<div class="header">
+<h1>📋 SSC CGL Phase 2 Study Planner</h1>
+<p>Apr 1 – Aug 31, 2027 &nbsp;|&nbsp; Math 3h · English 2h · Reasoning 1h · GK 1.5h · Computer/Typing 45m<br>
+Track each topic with Study ✅ → Revision 🔁 → 100 PYQs 📝 → Mastery 🎯</p>
+</div>
+
+<!-- CONTROLS -->
+<div class="controls">
+<button class="light" id="themeToggle" type="button">🌙 Dark Mode</button>
+<select id="monthFilter"></select>
+<select id="subjectFilter">
+<option value="all">All Subjects</option>
+<option value="Mathematics">📐 Mathematics</option>
+<option value="English">📖 English</option>
+<option value="Reasoning">🧩 Reasoning</option>
+<option value="GK">🌍 GK</option>
+<option value="Computer">💻 Computer</option>
+<option value="Typing">⌨️ Typing</option>
+</select>
+<button id="expandBtn" type="button">➕ Expand All</button>
+<button id="collapseBtn" type="button">➖ Collapse All</button>
+<button class="success" id="exportBtn" type="button">💾 Export</button>
+<button id="importBtn" type="button">📂 Import</button>
+<input type="file" id="importInput" accept=".json" style="display:none">
+<button id="printBtn" type="button">🖨️ Print</button>
+<button class="danger" id="resetBtn" type="button">🗑️ Reset</button>
+</div>
+
+<!-- COUNTDOWN -->
+<div class="countdown-grid">
+<div class="cd-box"><strong id="days">000</strong><span>Days</span></div>
+<div class="cd-box"><strong id="hours">00</strong><span>Hours</span></div>
+<div class="cd-box"><strong id="minutes">00</strong><span>Minutes</span></div>
+<div class="cd-box"><strong id="seconds">00</strong><span>Seconds</span></div>
+</div>
+
+<!-- PROGRESS METERS -->
+<div class="progress-section">
+<h2>📊 Overall Progress</h2>
+<div class="chart-grid">
+<div class="chart-box">
+<canvas id="syllabusChart" aria-label="Syllabus completion" role="img"></canvas>
+<div class="chart-pct" id="syllabusPercent">0%</div>
+<div class="chart-label">📚 Syllabus Done</div>
+</div>
+<div class="chart-box">
+<canvas id="revisionChart" aria-label="Revision completion" role="img"></canvas>
+<div class="chart-pct" id="revisionPercent">0%</div>
+<div class="chart-label">🔁 Revision Done</div>
+</div>
+<div class="chart-box">
+<canvas id="testChart" aria-label="PYQ completion" role="img"></canvas>
+<div class="chart-pct" id="testPercent">0%</div>
+<div class="chart-label">📝 PYQs Done</div>
+</div>
+<div class="chart-box">
+<canvas id="masteryChart" aria-label="Mastery completion" role="img"></canvas>
+<div class="chart-pct" id="masteryPercent">0%</div>
+<div class="chart-label">🎯 Mastery Done</div>
+</div>
+</div>
+</div>
+
+<!-- LEGEND -->
+<div class="legend">
+<div class="legend-item">📚 Study Done</div>
+<div class="legend-item">🔁 Revision</div>
+<div class="legend-item">📝 100+ PYQs</div>
+<div class="legend-item">🎯 Mastery 90%</div>
+<div class="legend-item">✏️ Note saved (blue dot)</div>
+</div>
+
+<!-- SCHEDULE -->
+<div id="scheduleArea"></div>
+</div>
+
+<!-- NOTES MODAL -->
+<div class="modal" id="notesModal" role="dialog" aria-modal="true" aria-labelledby="notesTitle">
+<div class="modal-box">
+<h3 id="notesTitle">Notes</h3>
+<p class="modal-hint">💡 Crucial Rule · My Silly Mistake · PYQ Twist (Ctrl+Enter to save)</p>
+<textarea id="notesField" placeholder="Write your notes here…"></textarea>
+<div class="modal-actions">
+<button class="light" id="cancelNotesBtn" type="button">Cancel</button>
+<button class="success" id="saveNotesBtn" type="button">💾 Save</button>
+</div>
+</div>
+</div>
+
+<script>
+// ─────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────
+const SUBJECT_ICONS = {
+Mathematics:'📐', English:'📖', Reasoning:'🧩',
+GK:'🌍', Computer:'💻', Typing:'⌨️'
+};
+
+const weeks = [
+{month:"April 2027",week:"Week 1",focus:"Foundation kick-off + History (Ancient)",items:[
+{subject:"Mathematics",topic:"Plane Geometry Basics",detail:"Triangles, circles (Classes 1-8)",key:"A1"},
+{subject:"English",topic:"Narration",detail:"Direct ↔ Indirect speech + exceptions",key:"A2"},
+{subject:"Reasoning",topic:"Syllogism Accuracy",detail:"Venn & possibility cases",key:"A3"},
+{subject:"GK",topic:"History – Ancient India",detail:"Harappa → Gupta (Read + quiz)",key:"A4"},
+{subject:"Computer",topic:"Computer Basics",detail:"CPU, memory, I/O devices, ports",key:"A5"},
+{subject:"Typing",topic:"Daily Typing 20m",detail:"Target 30 WPM",key:"A6"},
+]},
+{month:"April 2027",week:"Week 2",focus:"Arithmetic + Indian Geography",items:[
+{subject:"Mathematics",topic:"Algebra (Weak classes)",detail:"Factorisation, quadratic, inequalities",key:"B1"},
+{subject:"English",topic:"Tenses",detail:"12 tenses + spotting errors",key:"B2"},
+{subject:"Reasoning",topic:"Puzzle Sets",detail:"Seating, floor & arrangement",key:"B3"},
+{subject:"GK",topic:"Geography – India",detail:"Physical + climate + soil",key:"B4"},
+{subject:"Computer",topic:"Windows & File Explorer",detail:"Folders, shortcuts, management",key:"B5"},
+{subject:"Typing",topic:"Daily Typing 20m",detail:"30-32 WPM drills",key:"B6"},
+]},
+{month:"April 2027",week:"Week 3",focus:"Numbers + Polity",items:[
+{subject:"Mathematics",topic:"Number System",detail:"Divisibility, remainder, digital root",key:"C1"},
+{subject:"English",topic:"Voice (Active/Passive)",detail:"All forms + tricky patterns",key:"C2"},
+{subject:"Reasoning",topic:"Blood Relations",detail:"Family tree & coded relations",key:"C3"},
+{subject:"GK",topic:"Polity – Constitution Basics",detail:"Preamble, FR, DPSP",key:"C4"},
+{subject:"Computer",topic:"MS Word Basics",detail:"Formatting, tables, shortcuts",key:"C5"},
+{subject:"Typing",topic:"Daily Typing 20m",detail:"32-34 WPM drills",key:"C6"},
+]},
+{month:"April 2027",week:"Week 4",focus:"Time & Work + Medieval History",items:[
+{subject:"Mathematics",topic:"Time & Work / Pipes",detail:"Efficiency, alternate days",key:"D1"},
+{subject:"English",topic:"Vocabulary (Syn/Ant)",detail:"Root words + practice",key:"D2"},
+{subject:"Reasoning",topic:"Sitting Arrangement",detail:"Linear & circular speed",key:"D3"},
+{subject:"GK",topic:"History – Medieval India",detail:"Delhi Sultanate, Mughals",key:"D4"},
+{subject:"Computer",topic:"MS Excel Basics",detail:"Formulas, charts",key:"D5"},
+{subject:"Typing",topic:"Daily Typing 20m",detail:"34-35 WPM drills",key:"D6"},
+]},
+{month:"May 2027",week:"Week 1",focus:"Trigonometry + Modern History",items:[
+{subject:"Mathematics",topic:"Trigonometry I",detail:"Identities & standard angles",key:"E1"},
+{subject:"English",topic:"Para Jumbles",detail:"Logical order & connectors",key:"E2"},
+{subject:"Reasoning",topic:"Input-Output",detail:"Pattern finding + machine",key:"E3"},
+{subject:"GK",topic:"History – Modern (1857+)",detail:"Revolt to 1947 timeline",key:"E4"},
+{subject:"Computer",topic:"PowerPoint Basics",detail:"Slides, design, shortcuts",key:"E5"},
+{subject:"Typing",topic:"Daily Typing 20m",detail:"35 WPM goal",key:"E6"},
+]},
+{month:"May 2027",week:"Week 2",focus:"Mensuration + Physics",items:[
+{subject:"Mathematics",topic:"Mensuration 2D",detail:"All area / perimeter formulae",key:"F1"},
+{subject:"English",topic:"Error Spotting (Grammar)",detail:"SV Agreement, modifiers",key:"F2"},
+{subject:"Reasoning",topic:"Coding-Decoding",detail:"Letter/number/substitution",key:"F3"},
+{subject:"GK",topic:"Science – Physics",detail:"Motion, optics, electricity",key:"F4"},
+{subject:"Computer",topic:"Internet & Email",detail:"Browsing, search, etiquette",key:"F5"},
+{subject:"Typing",topic:"Daily Typing 20m",detail:"35-36 WPM goal",key:"F6"},
+]},
+{month:"May 2027",week:"Week 3",focus:"Data Interpretation + Chemistry",items:[
+{subject:"Mathematics",topic:"Data Interpretation",detail:"Bar, pie, missing DI",key:"G1"},
+{subject:"English",topic:"Reading Comprehension",detail:"Speed + inference practice",key:"G2"},
+{subject:"Reasoning",topic:"Analogy / Classification",detail:"Word & number patterns",key:"G3"},
+{subject:"GK",topic:"Science – Chemistry",detail:"Acids, metals, periodic table",key:"G4"},
+{subject:"Computer",topic:"Networking Basics",detail:"LAN/WAN, protocols",key:"G5"},
+{subject:"Typing",topic:"Daily Typing 20m",detail:"36-37 WPM goal",key:"G6"},
+]},
+{month:"May 2027",week:"Week 4",focus:"Percentage + Biology",items:[
+{subject:"Mathematics",topic:"Percentage / Profit-Loss Mix",detail:"Successive %, discount",key:"H1"},
+{subject:"English",topic:"Cloze Test",detail:"Contextual vocabulary",key:"H2"},
+{subject:"Reasoning",topic:"Calendar & Clock",detail:"Faster calculations",key:"H3"},
+{subject:"GK",topic:"Science – Biology",detail:"Human body, diseases",key:"H4"},
+{subject:"Computer",topic:"Cyber Security Basics",detail:"Threats & prevention",key:"H5"},
+{subject:"Typing",topic:"Daily Typing 20m",detail:"37-38 WPM goal",key:"H6"},
+]},
+{month:"June 2027",week:"Week 1",focus:"Revision Round 2 + Economics",items:[
+{subject:"Mathematics",topic:"Profit/Loss + Discount (Rev)",detail:"Weak areas fix",key:"I1"},
+{subject:"English",topic:"Sentence Improvement",detail:"Grammar refinement",key:"I2"},
+{subject:"Reasoning",topic:"Venn Diagram",detail:"3-circle tricky sets",key:"I3"},
+{subject:"GK",topic:"Economics – Basics",detail:"GDP, budget, schemes",key:"I4"},
+{subject:"Computer",topic:"PYQ (2018-20)",detail:"Module-wise practice",key:"I5"},
+{subject:"Typing",topic:"Daily Typing 25m",detail:"38-40 WPM goal",key:"I6"},
+]},
+{month:"June 2027",week:"Week 2",focus:"Mock Leakage Fix + Banking",items:[
+{subject:"Mathematics",topic:"SI / CI / Installments (Rev)",detail:"Mock analysis based",key:"J1"},
+{subject:"English",topic:"Phrase Replacement",detail:"Idiomatic usage",key:"J2"},
+{subject:"Reasoning",topic:"Data Sufficiency",detail:"Statement analysis",key:"J3"},
+{subject:"GK",topic:"Economics – Banking/Tax",detail:"RBI, tax structure",key:"J4"},
+{subject:"Computer",topic:"MS Office Shortcuts",detail:"Word/Excel PPT keys",key:"J5"},
+{subject:"Typing",topic:"Daily Typing 25m",detail:"40 WPM stretch",key:"J6"},
+]},
+{month:"June 2027",week:"Week 3",focus:"Geometry Mastery + Static GK",items:[
+{subject:"Mathematics",topic:"Plane Geometry (Rev)",detail:"Mixed theorem drills",key:"K1"},
+{subject:"English",topic:"Spelling Errors",detail:"Confusable words",key:"K2"},
+{subject:"Reasoning",topic:"Statement & Conclusions",detail:"Logic strength",key:"K3"},
+{subject:"GK",topic:"Static – Awards/Books",detail:"SSC favourite lists",key:"K4"},
+{subject:"Computer",topic:"PYQ (2021-23)",detail:"Latest pattern",key:"K5"},
+{subject:"Typing",topic:"Daily Typing 25m",detail:"40-41 WPM goal",key:"K6"},
+]},
+{month:"June 2027",week:"Week 4",focus:"Algebra Mastery + Static GK II",items:[
+{subject:"Mathematics",topic:"Algebra (Full Revision)",detail:"All chapters quick run",key:"L1"},
+{subject:"English",topic:"One Word Substitution",detail:"Sets from 2018-24",key:"L2"},
+{subject:"Reasoning",topic:"Cause & Effect",detail:"True cause reasoning",key:"L3"},
+{subject:"GK",topic:"Static – Rivers/Folk Dances",detail:"Map-based revision",key:"L4"},
+{subject:"Computer",topic:"Sectional Quiz",detail:"Full syllabus test",key:"L5"},
+{subject:"Typing",topic:"Daily Typing 25m",detail:"41 WPM target",key:"L6"},
+]},
+{month:"July 2027",week:"Week 1",focus:"Speed Booster + GA Mix",items:[
+{subject:"Mathematics",topic:"Simplification / Approx",detail:"Rapid calculation drills",key:"M1"},
+{subject:"English",topic:"Idioms & Phrases",detail:"Theme-based sets",key:"M2"},
+{subject:"Reasoning",topic:"Series (Alpha/Num)",detail:"Pattern recall",key:"M3"},
+{subject:"GK",topic:"History & Polity Mix",detail:"Quick-fire revision",key:"M4"},
+{subject:"Computer",topic:"Shortcut Drills",detail:"Daily quick recap",key:"M5"},
+{subject:"Typing",topic:"Daily Typing 25m",detail:"42 WPM",key:"M6"},
+]},
+{month:"July 2027",week:"Week 2",focus:"Mock Analysis II + GA Depth",items:[
+{subject:"Mathematics",topic:"DI + Arithmetic Mix",detail:"Mock leak patches",key:"N1"},
+{subject:"English",topic:"Fillers (Single/Double)",detail:"Context usage",key:"N2"},
+{subject:"Reasoning",topic:"Logical Reasoning Mix",detail:"Inferences + puzzle mix",key:"N3"},
+{subject:"GK",topic:"Geography/Economy Mix",detail:"Maps + data",key:"N4"},
+{subject:"Computer",topic:"Excel/Word Advanced",detail:"Pivot, formulas, styles",key:"N5"},
+{subject:"Typing",topic:"Daily Typing 25m",detail:"42-43 WPM",key:"N6"},
+]},
+{month:"July 2027",week:"Week 3",focus:"Speed Mock Round",items:[
+{subject:"Mathematics",topic:"Mixed Mock Drills",detail:"50 Q in 35 mins",key:"O1"},
+{subject:"English",topic:"Mixed Mock Drills",detail:"RC + Grammar combo",key:"O2"},
+{subject:"Reasoning",topic:"Mixed Mock Drills",detail:"Puzzle + series combo",key:"O3"},
+{subject:"GK",topic:"Science & Static Mix",detail:"Rapid-fire quiz",key:"O4"},
+{subject:"Computer",topic:"Full Mock",detail:"50 Q sectional",key:"O5"},
+{subject:"Typing",topic:"Daily Typing 25m",detail:"43 WPM",key:"O6"},
+]},
+{month:"July 2027",week:"Week 4",focus:"Final Leak Fix",items:[
+{subject:"Mathematics",topic:"Weakest Subtopic Focus",detail:"Logbook revisit",key:"P1"},
+{subject:"English",topic:"Weakest Grammar/Vocab",detail:"Logbook revisit",key:"P2"},
+{subject:"Reasoning",topic:"Weakest Patterns",detail:"Logbook revisit",key:"P3"},
+{subject:"GK",topic:"Top 500 MCQ (Start)",detail:"Compile & revise",key:"P4"},
+{subject:"Computer",topic:"PYQ Review + Notes",detail:"Condensed sheets",key:"P5"},
+{subject:"Typing",topic:"Daily Typing 25m",detail:"43-44 WPM",key:"P6"},
+]},
+{month:"August 2027",week:"Week 1",focus:"Third Revision Sprint",items:[
+{subject:"Mathematics",topic:"All Short Notes",detail:"Flashcards + formulae",key:"Q1"},
+{subject:"English",topic:"Short Notes + Tricky Qs",detail:"Rules summary",key:"Q2"},
+{subject:"Reasoning",topic:"Short Notes + Mistakes",detail:"Error log run",key:"Q3"},
+{subject:"GK",topic:"Current Affairs Jan-Mar",detail:"Magazines final read",key:"Q4"},
+{subject:"Computer",topic:"Concept Sheet Review",detail:"Notes + shortcuts",key:"Q5"},
+{subject:"Typing",topic:"Daily Typing 30m",detail:"45 WPM target",key:"Q6"},
+]},
+{month:"August 2027",week:"Week 2",focus:"Full Mock Alternate Days",items:[
+{subject:"Mathematics",topic:"Mock Day 1 • Analysis Day 2",detail:"Error breakdown",key:"R1"},
+{subject:"English",topic:"Mock Day 1 • Analysis Day 2",detail:"Error breakdown",key:"R2"},
+{subject:"Reasoning",topic:"Mock Day 1 • Analysis Day 2",detail:"Error breakdown",key:"R3"},
+{subject:"GK",topic:"Current Affairs Apr-May",detail:"Magazines + quiz",key:"R4"},
+{subject:"Computer",topic:"Mock + Error Copy",detail:"Sectional review",key:"R5"},
+{subject:"Typing",topic:"Daily Typing 30m",detail:"46 WPM target",key:"R6"},
+]},
+{month:"August 2027",week:"Week 3",focus:"Mock & Notes Loop",items:[
+{subject:"Mathematics",topic:"Mocks + Sheet Revision",detail:"Formula + tricky Q",key:"S1"},
+{subject:"English",topic:"Mocks + Sheet Revision",detail:"Vocab journal",key:"S2"},
+{subject:"Reasoning",topic:"Mocks + Sheet Revision",detail:"Puzzle replay",key:"S3"},
+{subject:"GK",topic:"Current Affairs Jun-Jul",detail:"Magazines + Top500",key:"S4"},
+{subject:"Computer",topic:"Final PYQ Loop",detail:"Revise shortcuts list",key:"S5"},
+{subject:"Typing",topic:"Daily Typing 30m",detail:"46-47 WPM",key:"S6"},
+]},
+{month:"August 2027",week:"Week 4",focus:"Grand Consolidation",items:[
+{subject:"Mathematics",topic:"Rapid Fire Revision",detail:"One-liners + flash",key:"T1"},
+{subject:"English",topic:"Rapid Fire Revision",detail:"Grammar + vocab cards",key:"T2"},
+{subject:"Reasoning",topic:"Rapid Fire Revision",detail:"All puzzle logs",key:"T3"},
+{subject:"GK",topic:"Note Sections Review",detail:"Mistake log run",key:"T4"},
+{subject:"Computer",topic:"Final Shortcut Drill",detail:"Excel/Word recap",key:"T5"},
+{subject:"Typing",topic:"Daily Typing 30m",detail:"47+ WPM maintain",key:"T6"},
+]}
+];
+
+// ─────────────────────────────────────────
+// CONSTANTS
+// ─────────────────────────────────────────
+const PROGRESS_TYPES = [
+{type:'study', icon:'📚', label:'Study'},
+{type:'revision', icon:'🔁', label:'Revise'},
+{type:'pyq', icon:'📝', label:'PYQs'},
+{type:'mastery', icon:'🎯', label:'Mastery'}
+];
+const KEYS = {theme:'phase2-theme', filters:'phase2-filters', collapsed:'phase2-collapsed'};
+const END_DATE = new Date('2027-08-31T23:59:59');
+
+// ─────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────
+let charts = {};
+let currentNoteKey = '';
+let collapsedWeeks = new Set(safeParse(localStorage.getItem(KEYS.collapsed), []));
+let savedFilters = safeParse(localStorage.getItem(KEYS.filters), {month:'all', subject:'all'});
+
+// ─────────────────────────────────────────
+// BOOT
+// ─────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+initTheme();
+buildMonthFilter();
+renderSchedule();
+hydrateCheckboxes();
+bindEvents();
+applyFilters();
+initCharts();
+updateCharts();
+startCountdown();
+refreshNoteIndicators();
+});
+
+// ─────────────────────────────────────────
+// RENDER
+// ─────────────────────────────────────────
+function renderSchedule(){
+const area = document.getElementById('scheduleArea');
+area.innerHTML = weeks.map(w => renderWeekBlock(w)).join('');
+}
+
+function renderWeekBlock(w){
+const wKey = weekKey(w);
+const collapsed = collapsedWeeks.has(wKey) ? 'collapsed' : '';
+return `
+<div class="week-block ${collapsed}" data-month="${esc(w.month)}" data-week-key="${wKey}">
+<div class="week-header">
+<div class="week-header-left">
+<h3>📅 ${esc(w.month)} &nbsp;·&nbsp; ${esc(w.week)}</h3>
+<span class="focus-tag">🎯 ${esc(w.focus)}</span>
+</div>
+<button type="button" class="toggle-btn" data-week-key="${wKey}">
+${collapsedWeeks.has(wKey) ? '➕ Show' : '➖ Hide'}
+</button>
+</div>
+<div class="week-body">
+${w.items.map(item => renderSubjectCard(item)).join('')}
+<p class="no-match-msg">No subjects match the current filter for this week.</p>
+</div>
+</div>`;
+}
+
+function renderSubjectCard(item){
+const icon = SUBJECT_ICONS[item.subject] || '📌';
+return `
+<div class="subject-card" data-subject="${esc(item.subject)}" data-key="${item.key}">
+<div class="subj-header">
+<div class="subj-badge">
+<span class="subj-icon">${icon}</span>
+<div>
+<div class="subj-name">${esc(item.subject)}</div>
+<div class="subj-topic">${esc(item.topic)}</div>
+</div>
+</div>
+</div>
+<div class="subj-body">
+<div class="subj-detail">📌 ${esc(item.detail)}</div>
+<div class="progress-row">
+${PROGRESS_TYPES.map(p => `
+<label class="prog-item">
+<input type="checkbox" class="prog-cb" id="${item.key}-${p.type}" data-type="${p.type}">
+<span class="prog-icon">${p.icon}</span>
+<span class="prog-label">${p.label}</span>
+</label>
+`).join('')}
+</div>
+<button type="button" class="notes-btn"
+data-note-key="${item.key}"
+data-note-title="${esc(item.subject)} — ${esc(item.topic)}">
+✏️ Add / View Notes
+<span class="notes-indicator" id="ind-${item.key}"></span>
+</button>
+</div>
+</div>`;
+}
+
+// ─────────────────────────────────────────
+// HYDRATE (restore checkbox state)
+// ─────────────────────────────────────────
+function hydrateCheckboxes(){
+document.querySelectorAll('.prog-cb').forEach(cb => {
+cb.checked = localStorage.getItem(cb.id) === 'true';
+});
+}
+
+function refreshNoteIndicators(){
+document.querySelectorAll('.notes-indicator').forEach(ind => {
+const key = `notes-${ind.id.replace('ind-','')}`;
+const has = !!localStorage.getItem(key);
+ind.style.display = has ? 'inline-block' : 'none';
+});
+}
+
+// ─────────────────────────────────────────
+// FILTERS
+// ─────────────────────────────────────────
+function buildMonthFilter(){
+const sel = document.getElementById('monthFilter');
+const months = [...new Set(weeks.map(w => w.month))];
+sel.innerHTML = `<option value="all">All Months</option>` +
+months.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join('');
+sel.value = months.includes(savedFilters.month) ? savedFilters.month : 'all';
+document.getElementById('subjectFilter').value = savedFilters.subject || 'all';
+}
+
+function applyFilters(){
+const mv = document.getElementById('monthFilter').value;
+const sv = document.getElementById('subjectFilter').value;
+document.querySelectorAll('.week-block').forEach(block => {
+const monthMatch = mv === 'all' || block.dataset.month === mv;
+block.style.display = monthMatch ? '' : 'none';
+if(!monthMatch) return;
+let vis = 0;
+block.querySelectorAll('.subject-card').forEach(card => {
+const show = sv === 'all' || card.dataset.subject === sv;
+card.style.display = show ? '' : 'none';
+if(show) vis++;
+});
+block.classList.toggle('no-subjects', vis === 0 && sv !== 'all');
+});
+}
+
+function saveFilters(){
+localStorage.setItem(KEYS.filters, JSON.stringify({
+month: document.getElementById('monthFilter').value,
+subject: document.getElementById('subjectFilter').value
+}));
+}
+
+// ─────────────────────────────────────────
+// COLLAPSE / EXPAND
+// ─────────────────────────────────────────
+function toggleWeek(wk, force){
+const block = document.querySelector(`.week-block[data-week-key="${wk}"]`);
+if(!block) return;
+const shouldCollapse = typeof force === 'boolean' ? force : !block.classList.contains('collapsed');
+block.classList.toggle('collapsed', shouldCollapse);
+const btn = block.querySelector('.toggle-btn');
+if(btn) btn.textContent = shouldCollapse ? '➕ Show' : '➖ Hide';
+shouldCollapse ? collapsedWeeks.add(wk) : collapsedWeeks.delete(wk);
+localStorage.setItem(KEYS.collapsed, JSON.stringify([...collapsedWeeks]));
+}
+function expandAll(){ weeks.forEach(w => toggleWeek(weekKey(w), false)); }
+function collapseAll(){ weeks.forEach(w => toggleWeek(weekKey(w), true)); }
+
+// ─────────────────────────────────────────
+// NOTES MODAL
+// ─────────────────────────────────────────
+function openNotes(key, title){
+currentNoteKey = `notes-${key}`;
+document.getElementById('notesTitle').textContent = title;
+document.getElementById('notesField').value = localStorage.getItem(currentNoteKey) || '';
+document.getElementById('notesModal').classList.add('active');
+document.body.classList.add('modal-open');
+setTimeout(() => document.getElementById('notesField').focus(), 60);
+}
+function closeNotes(){
+document.getElementById('notesModal').classList.remove('active');
+document.body.classList.remove('modal-open');
+currentNoteKey = '';
+}
+function saveNotes(){
+if(currentNoteKey){
+const val = document.getElementById('notesField').value;
+if(val.trim()){
+localStorage.setItem(currentNoteKey, val);
+} else {
+localStorage.removeItem(currentNoteKey);
+}
+refreshNoteIndicators();
+}
+closeNotes();
+}
+
+// ─────────────────────────────────────────
+// THEME
+// ─────────────────────────────────────────
+function initTheme(){
+const stored = localStorage.getItem(KEYS.theme);
+const sys = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+applyTheme(stored || sys);
+}
+function toggleTheme(){
+const dark = document.body.getAttribute('data-theme') === 'dark';
+applyTheme(dark ? 'light' : 'dark');
+}
+function applyTheme(t){
+if(t === 'dark') document.body.setAttribute('data-theme','dark');
+else document.body.removeAttribute('data-theme');
+localStorage.setItem(KEYS.theme, t);
+document.getElementById('themeToggle').textContent = t === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+refreshChartColors();
+}
+
+// ─────────────────────────────────────────
+// CHARTS
+// ─────────────────────────────────────────
+const CHART_COLORS = ['#2563eb','#8b5cf6','#16a34a','#f59e0b'];
+
+function initCharts(){
+['syllabusChart','revisionChart','testChart','masteryChart'].forEach((id, i) => {
+const ctx = document.getElementById(id).getContext('2d');
+charts[id] = new Chart(ctx, {
+type:'doughnut',
+data:{ labels:['Done','Left'], datasets:[{data:[0,100], backgroundColor:[CHART_COLORS[i],'#e5e7eb'], borderWidth:0}]},
+options:{ cutout:'72%', plugins:{legend:{display:false}}, animation:{duration:500}}
+});
+});
+}
+
+function refreshChartColors(){
+const pending = document.body.getAttribute('data-theme') === 'dark' ? '#334155' : '#e5e7eb';
+Object.entries(charts).forEach(([, chart]) => {
+chart.data.datasets[0].backgroundColor[1] = pending;
+chart.update('none');
+});
+}
+
+function calcPercent(type){
+const all = document.querySelectorAll(`.prog-cb[data-type="${type}"]`);
+if(!all.length) return 0;
+return Math.round([...all].filter(c => c.checked).length / all.length * 100);
+}
+
+function updateCharts(){
+const types = ['study','revision','pyq','mastery'];
+const ids = ['syllabusChart','revisionChart','testChart','masteryChart'];
+const pcts = ['syllabusPercent','revisionPercent','testPercent','masteryPercent'];
+types.forEach((t,i) => {
+const p = calcPercent(t);
+if(charts[ids[i]]){
+charts[ids[i]].data.datasets[0].data = [p, 100-p];
+charts[ids[i]].update();
+}
+document.getElementById(pcts[i]).textContent = p + '%';
+});
+}
+
+// ─────────────────────────────────────────
+// COUNTDOWN
+// ─────────────────────────────────────────
+function startCountdown(){
+tick();
+setInterval(tick, 1000);
+}
+function tick(){
+const d = END_DATE - new Date();
+if(d <= 0){
+['days','hours','minutes','seconds'].forEach(id => document.getElementById(id).textContent = id === 'days' ? '000' : '00');
+return;
+}
+document.getElementById('days').textContent = pad(Math.floor(d/86400000), 3);
+document.getElementById('hours').textContent = pad(Math.floor(d/3600000) % 24, 2);
+document.getElementById('minutes').textContent = pad(Math.floor(d/60000) % 60, 2);
+document.getElementById('seconds').textContent = pad(Math.floor(d/1000) % 60, 2);
+}
+
+// ─────────────────────────────────────────
+// EXPORT / IMPORT / RESET
+// ─────────────────────────────────────────
+function exportData(){
+const data = {};
+for(let i=0; i<localStorage.length; i++){
+const k = localStorage.key(i);
+if(isPlannerKey(k)) data[k] = localStorage.getItem(k);
+}
+const a = document.createElement('a');
+a.href = URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+a.download = 'ssc_phase2_backup.json';
+a.click();
+}
+function handleImport(e){
+const file = e.target.files[0]; if(!file) return;
+const reader = new FileReader();
+reader.onload = ev => {
+try{
+const data = JSON.parse(ev.target.result);
+Object.keys(data).forEach(k => { if(isPlannerKey(k)) localStorage.setItem(k, data[k]); });
+location.reload();
+} catch {
+alert('❌ Import failed: file is not valid JSON.');
+} finally {
+e.target.value = '';
+}
+};
+reader.readAsText(file);
+}
+function resetAll(){
+if(!confirm('⚠️ Delete ALL saved progress and notes? This cannot be undone.')) return;
+const keys = [];
+for(let i=0; i<localStorage.length; i++){
+const k = localStorage.key(i);
+if(isPlannerKey(k)) keys.push(k);
+}
+keys.forEach(k => localStorage.removeItem(k));
+location.reload();
+}
+function isPlannerKey(k){
+return k.startsWith('notes-') ||
+/-(study|revision|pyq|mastery)$/.test(k) ||
+Object.values(KEYS).includes(k);
+}
+
+// ─────────────────────────────────────────
+// EVENTS (all delegated — no inline handlers)
+// ─────────────────────────────────────────
+function bindEvents(){
+document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+document.getElementById('expandBtn').addEventListener('click', expandAll);
+document.getElementById('collapseBtn').addEventListener('click', collapseAll);
+document.getElementById('exportBtn').addEventListener('click', exportData);
+document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importInput').click());
+document.getElementById('importInput').addEventListener('change', handleImport);
+document.getElementById('printBtn').addEventListener('click', () => window.print());
+document.getElementById('resetBtn').addEventListener('click', resetAll);
+document.getElementById('monthFilter').addEventListener('change', () => { saveFilters(); applyFilters(); });
+document.getElementById('subjectFilter').addEventListener('change', () => { saveFilters(); applyFilters(); });
+document.getElementById('cancelNotesBtn').addEventListener('click', closeNotes);
+document.getElementById('saveNotesBtn').addEventListener('click', saveNotes);
+document.getElementById('notesModal').addEventListener('click', e => { if(e.target.id === 'notesModal') closeNotes(); });
+document.getElementById('notesField').addEventListener('keydown', e => {
+if((e.ctrlKey || e.metaKey) && e.key === 'Enter'){ e.preventDefault(); saveNotes(); }
+});
+document.addEventListener('keydown', e => {
+if(e.key === 'Escape' && document.getElementById('notesModal').classList.contains('active')) closeNotes();
+});
+// schedule delegation
+document.getElementById('scheduleArea').addEventListener('click', e => {
+const nb = e.target.closest('.notes-btn');
+if(nb){ openNotes(nb.dataset.noteKey, nb.dataset.noteTitle); return; }
+const tb = e.target.closest('.toggle-btn');
+if(tb){ toggleWeek(tb.dataset.weekKey); return; }
+const wh = e.target.closest('.week-header');
+if(wh && !e.target.closest('button')){
+const wk = wh.closest('.week-block')?.dataset.weekKey;
+if(wk) toggleWeek(wk);
+}
+});
+document.getElementById('scheduleArea').addEventListener('change', e => {
+if(!e.target.classList.contains('prog-cb')) return;
+localStorage.setItem(e.target.id, e.target.checked);
+updateCharts();
+});
+}
+
+// ─────────────────────────────────────────
+// UTILS
+// ─────────────────────────────────────────
+function esc(s = ''){
+return String(s).replace(/[&<>"']/g, c =>
+({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function weekKey(w){
+return `${w.month}-${w.week}`.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+}
+function pad(n, len){ return String(n).padStart(len,'0'); }
+function safeParse(v, fallback){
+try{ return v ? JSON.parse(v) : fallback; } catch{ return fallback; }
+}
+</script>
+</body>
+</html>
